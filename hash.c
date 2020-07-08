@@ -48,13 +48,19 @@ int checkIfUserExists(FILE *fp, char *user) {
 }
 
 int checkPassword(FILE *fp, credentials *user) {
-    /* TODO: Check if passed string is assigned to the user */
+    int c = 0;
     char line[256];
     char needle[256];
-    sprintf(needle, "username: %s,\n\tpassword: %s", user->username, user->hashpwd);
+    sprintf(needle, "username: %s", user->username);
     while (fgets(line, sizeof(line), fp)) {
+        if (c) {
+            sprintf(needle, "password: %s", user->hashpwd);
+            if (strstr(line, needle) != NULL) {
+                return 1;
+            }
+        }
         if (strstr(line, needle) != NULL) {
-            return 1;
+            c++;
         }
     }
     return 0;
@@ -117,12 +123,10 @@ int main(int argc, char *argv[]) {
                     exit(0);
                 }
             }
-            if (checkIfUserExists(fp, myUSER)) {
+            if (checkIfUserExists(fp, newUser->username)) {
                 fprintf(stdout, "User already exists...\n");
                 exit(1);
             }
-            
-
             char hexHash[16];
             char theNewUser[256];
             if ((filho = fork()) == 0) {
