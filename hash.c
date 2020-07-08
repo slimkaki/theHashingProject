@@ -87,13 +87,16 @@ int main(int argc, char *argv[]) {
             credentials *newUser = malloc(sizeof(credentials));
             newUser->username = myUSER;
             char hexHash[16];
+            char theNewUser[256];
             if ((filho = fork()) == 0) {
                 int mySIZE = strlen(myPWD);
                 int hash = encryptPWD(myPWD, mySIZE);
                 printf("Hash = 0x%x\n", hash);
                 sprintf(hexHash, "%x", hash);
                 newUser->hashpwd = hexHash;
-
+                sprintf(theNewUser, "{\n\tusername: %s,\n\tpassword: %s\n}", newUser->username, newUser->hashpwd);
+                int nbytes = strlen(theNewUser);
+                write(fd, theNewUser, nbytes);
             } else {
                 wait(&filho);
                 free(newUser);

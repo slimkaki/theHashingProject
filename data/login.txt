@@ -1,0 +1,4 @@
+{
+	username: slimkaki,
+	password: 130edc60
+}
