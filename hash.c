@@ -3,6 +3,12 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <fcntl.h>
+
+typedef struct {
+    char *username;
+    char *hashpwd;
+} credentials;
 
 int encryptPWD(char myString[], int size) {
     int hash = 0;
@@ -20,22 +26,32 @@ int encryptPWD(char myString[], int size) {
     return hash;
 }
 
-int checkIfPasswordExist() {
-    /* TODO: Check if passed string exists */
+int checkIfUserExists(char *user) {
+    /* TODO: Check if user exists */
+    return 0;
+}
+
+int checkPassword() {
+    /* TODO: Check if passed string is assigned to the user */
     return 0;
 }
 
 int main(int argc, char *argv[]) {
     /* 
     Arguments:
-        -p <PASSWORD>: passes a password to the code;
-        --check: flag to check if it's a known password;
+        -u <USERNAME>: Username to be signed in;
+        -p <PASSWORD>: Password to respectively username;
+        --login: Check if given password is correct to that username;
     */
+    int fd;
+    if ((fd = open("./data/login.txt", O_CREAT |  O_RDONLY | O_WRONLY, 0600)) == NULL) {
+        fprintf(stderr, "Error trying to create login data file\n");
+        exit(1);
+    }
     int filho;
-    int check = 0;
+    int login = 0;
     char *myUSER;
     char *myPWD;
-    printf("senha: %s\n", argv[2]);
     if (argc <= 2) {
         if (argc == 1) {
             fprintf(stderr, "No argumments were passed\n");
@@ -53,23 +69,38 @@ int main(int argc, char *argv[]) {
             if (strstr(argv[i], "-p")) {
                 i++;
                 myPWD = argv[i];
+                printf("senha: %s\n", myPWD);
             }
-            if (strstr(argv[i], "--check")) {
-                check++;
+            if (strstr(argv[i], "--login")) {
+                login++;
             }
         }
 
-        if ((filho = fork()) == 0) {
-            /* TODO: CREATE HASH */
-            int mySIZE = strlen(myPWD);
-            int hash = encryptPWD(myPWD, mySIZE);
-            printf("Hash = 0x%x\n", hash);
-
+        if (myUSER == NULL) {
+            fprintf(stderr, "Need a username to continue...\n");
+            exit(1);
         } else {
-            wait(&filho);
-        }
+            // if (checkIfUserExist(myUSER)) {
+            //     fprintf(stdout, "User already exists...\n");
+            //     exit(1);
+            // }
+            credentials *newUser = malloc(sizeof(credentials));
+            newUser->username = myUSER;
+            char hexHash[16];
+            if ((filho = fork()) == 0) {
+                int mySIZE = strlen(myPWD);
+                int hash = encryptPWD(myPWD, mySIZE);
+                printf("Hash = 0x%x\n", hash);
+                sprintf(hexHash, "%x", hash);
+                newUser->hashpwd = hexHash;
 
+            } else {
+                wait(&filho);
+                free(newUser);
+            }
+        }
     }
     
+    close(fd);
     return 0;
 }
