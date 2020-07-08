@@ -10,12 +10,12 @@ int encryptPWD(char myString[], int size) {
     for (int i = 0; i < size; i++) {
         int x = (int) myString[i];
         int aux = 1;
-        x *= 1000;
+        x = x * 85432100 * (i + 1);
         for (int j = 512; j > 1; j /= 2) {
             hash = hash + (aux*x)%j;
             aux *= -1;
         }
-
+        hash *= 10000;
     }
     return hash;
 }
@@ -59,7 +59,6 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        printf("vou criar o filho\n");
         if ((filho = fork()) == 0) {
             /* TODO: CREATE HASH */
             int mySIZE = strlen(myPWD);
