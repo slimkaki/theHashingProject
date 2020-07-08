@@ -2,24 +2,27 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
-typedef struct {
-    int index;
-} myHash;
-
-int encrypt() {
+int encryptPWD(char myString[], int size) {
     /* TODO: Dncrypt a string to a hash */
+    int hash = 0;
+    for (int i = 0; i < size; i++) {
+        int x = (int) myString[i];
+        int aux = 1;
+        x *= 1000;
+        for (int j = 512; j > 1; j /= 2) {
+            hash = hash + (aux*x)%j;
+            aux *= -1;
+        }
 
-    return 0;
-}
-
-int decrypt() {
-    /* TODO: Decrypt a hash to a string */
-    return 0;
+    }
+    return hash;
 }
 
 int checkIfPasswordExist() {
     /* TODO: Check if passed string exists */
+    return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -28,22 +31,21 @@ int main(int argc, char *argv[]) {
         -p <PASSWORD>: passes a password to the code;
         --check: flag to check if it's a known password;
     */
-    int size = sizeof(argv)/sizeof(argv[0]);
     int filho;
     int check = 0;
     char *myUSER;
     char *myPWD;
+    printf("senha: %s\n", argv[2]);
     if (argc <= 2) {
         if (argc == 1) {
             fprintf(stderr, "No argumments were passed\n");
         } else {
             if (strstr(argv[1], "-h") || strstr(argv[1], "-help")) {
-                printf();
             }
         }
         exit(1);
     } else {
-        for (int i = 1; i < size; i++) {
+        for (int i = 1; i < argc; i++) {
             if (strstr(argv[i], "-u")) {
                 i++;
                 myUSER = argv[i];
@@ -57,8 +59,12 @@ int main(int argc, char *argv[]) {
             }
         }
 
+        printf("vou criar o filho\n");
         if ((filho = fork()) == 0) {
             /* TODO: CREATE HASH */
+            int mySIZE = strlen(myPWD);
+            int hash = encryptPWD(myPWD, mySIZE);
+            printf("Hash = 0x%x\n", hash);
 
         } else {
             wait(&filho);
