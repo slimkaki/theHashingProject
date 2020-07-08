@@ -1,4 +1,12 @@
 {
 	username: slimkaki,
-	password: 130edc60
+	password: dd4c0538
+},
+{
+	username: slimkaki2,
+	password: 37b92fa0
+},
+{
+	username: rafa,
+	password: 153f8520
 }

@@ -4,6 +4,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/types.h>
 
 typedef struct {
     char *username;
@@ -26,15 +27,36 @@ int encryptPWD(char myString[], int size) {
     return hash;
 }
 
-int checkIfUserExists(int fd, char *user) {
-    /* TODO: Check if user exists */
-    int i = fseek(fd, 0, SEEK_END);
-    printf("end of file = %d\n", i);
+int isTheFileEmpty(FILE *fp) {
+    fseek(fp, 0, SEEK_END);
+    if (ftell(fp) == 0) {
+        return 1;
+    }
     return 0;
 }
 
-int checkPassword() {
+int checkIfUserExists(FILE *fp, char *user) {
+    char line[256];
+    char needle[256];
+    sprintf(needle, "username: %s", user);
+    while (fgets(line, sizeof(line), fp)) {
+        if (strstr(line, needle) != NULL) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int checkPassword(FILE *fp, credentials *user) {
     /* TODO: Check if passed string is assigned to the user */
+    char line[256];
+    char needle[256];
+    sprintf(needle, "username: %s,\n\tpassword: %s", user->username, user->hashpwd);
+    while (fgets(line, sizeof(line), fp)) {
+        if (strstr(line, needle) != NULL) {
+            return 1;
+        }
+    }
     return 0;
 }
 
@@ -45,10 +67,9 @@ int main(int argc, char *argv[]) {
         -p <PASSWORD>: Password to respectively username;
         --login: Check if given password is correct to that username;
     */
-    int fd;
+    FILE *fp;
 
-    /* May change to fopen later */
-    if ((fd = open("./data/login.txt", O_CREAT |  O_RDONLY | O_WRONLY, 0600)) == NULL) {
+    if ((fp = fopen("./data/login.txt", "r+")) == NULL) {
         fprintf(stderr, "Error trying to create login data file\n");
         exit(1);
     }
@@ -73,7 +94,6 @@ int main(int argc, char *argv[]) {
             if (strstr(argv[i], "-p")) {
                 i++;
                 myPWD = argv[i];
-                printf("senha: %s\n", myPWD);
             }
             if (strstr(argv[i], "--login")) {
                 login++;
@@ -84,13 +104,25 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "Need a username to continue...\n");
             exit(1);
         } else {
-            checkIfUserExists(fd, myUSER);
-            // if (checkIfUserExist(myUSER)) {
-            //     fprintf(stdout, "User already exists...\n");
-            //     exit(1);
-            // }
             credentials *newUser = malloc(sizeof(credentials));
             newUser->username = myUSER;
+            if (login) {
+                int checkSIZE = strlen(myPWD);
+                int checkHash = encryptPWD(myPWD, checkSIZE);
+                char hexHash[16];
+                sprintf(hexHash, "%x", checkHash);
+                newUser->hashpwd = hexHash;
+                if (checkPassword(fp, newUser)) {
+                    fprintf(stdout, "Access granted!\n");
+                    exit(0);
+                }
+            }
+            if (checkIfUserExists(fp, myUSER)) {
+                fprintf(stdout, "User already exists...\n");
+                exit(1);
+            }
+            
+
             char hexHash[16];
             char theNewUser[256];
             if ((filho = fork()) == 0) {
@@ -99,16 +131,19 @@ int main(int argc, char *argv[]) {
                 printf("Hash = 0x%x\n", hash);
                 sprintf(hexHash, "%x", hash);
                 newUser->hashpwd = hexHash;
-                sprintf(theNewUser, "{\n\tusername: %s,\n\tpassword: %s\n}", newUser->username, newUser->hashpwd);
+                if (isTheFileEmpty(fp)) {
+                    sprintf(theNewUser, "{\n\tusername: %s,\n\tpassword: %s\n}", newUser->username, newUser->hashpwd);
+                } else {
+                    sprintf(theNewUser, ",\n{\n\tusername: %s,\n\tpassword: %s\n}", newUser->username, newUser->hashpwd);
+                }
                 int nbytes = strlen(theNewUser);
-                write(fd, theNewUser, nbytes);
+                fwrite(theNewUser, nbytes, 1, fp);
             } else {
                 wait(&filho);
                 free(newUser);
             }
         }
     }
-    
-    close(fd);
+    fclose(fp);
     return 0;
 }
