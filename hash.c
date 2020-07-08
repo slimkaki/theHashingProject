@@ -26,8 +26,10 @@ int encryptPWD(char myString[], int size) {
     return hash;
 }
 
-int checkIfUserExists(char *user) {
+int checkIfUserExists(int fd, char *user) {
     /* TODO: Check if user exists */
+    int i = fseek(fd, 0, SEEK_END);
+    printf("end of file = %d\n", i);
     return 0;
 }
 
@@ -44,6 +46,8 @@ int main(int argc, char *argv[]) {
         --login: Check if given password is correct to that username;
     */
     int fd;
+
+    /* May change to fopen later */
     if ((fd = open("./data/login.txt", O_CREAT |  O_RDONLY | O_WRONLY, 0600)) == NULL) {
         fprintf(stderr, "Error trying to create login data file\n");
         exit(1);
@@ -80,6 +84,7 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "Need a username to continue...\n");
             exit(1);
         } else {
+            checkIfUserExists(fd, myUSER);
             // if (checkIfUserExist(myUSER)) {
             //     fprintf(stdout, "User already exists...\n");
             //     exit(1);
