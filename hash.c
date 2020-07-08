@@ -5,17 +5,17 @@
 #include <unistd.h>
 
 int encryptPWD(char myString[], int size) {
-    /* TODO: Dncrypt a string to a hash */
     int hash = 0;
+    int aux;
     for (int i = 0; i < size; i++) {
         int x = (int) myString[i];
-        int aux = 1;
+        aux = 1;
         x = x * 85432100 * (i + 1);
         for (int j = 512; j > 1; j /= 2) {
             hash = hash + (aux*x)%j;
             aux *= -1;
         }
-        hash *= 10000;
+        hash *= 100000001;
     }
     return hash;
 }
