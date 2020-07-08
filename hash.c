@@ -3,8 +3,8 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <sys/types.h>
+#include "cores.h"
 
 typedef struct {
     char *username;
@@ -72,6 +72,7 @@ int main(int argc, char *argv[]) {
         -u <USERNAME>: Username to be signed in;
         -p <PASSWORD>: Password to respectively username;
         --login: Check if given password is correct to that username;
+        -h or -help: Gives help to the user;
     */
     FILE *fp;
 
@@ -85,9 +86,17 @@ int main(int argc, char *argv[]) {
     char *myPWD;
     if (argc <= 2) {
         if (argc == 1) {
-            fprintf(stderr, "No argumments were passed\n");
+            boldRed();
+            fprintf(stdout, "No argumments were passed\n");
+            reset();
         } else {
             if (strstr(argv[1], "-h") || strstr(argv[1], "-help")) {
+                magenta();
+                printf("Possible arguments:\n");
+                cyan();
+                printf("\t-u <USERNAME>: Username to be signed in;\n\t-p <PASSWORD>: Password to respectively username;\n\t--login: Check if given password is correct to that username;\n\t-h or -help: Gives help to the user;\n");
+                reset();
+                exit(0);
             }
         }
         exit(1);
@@ -105,9 +114,10 @@ int main(int argc, char *argv[]) {
                 login++;
             }
         }
-
         if (myUSER == NULL) {
-            fprintf(stderr, "Need a username to continue...\n");
+            boldRed();
+            fprintf(stdout, "Need a username to continue...\n");
+            reset();
             exit(1);
         } else {
             credentials *newUser = malloc(sizeof(credentials));
@@ -119,12 +129,16 @@ int main(int argc, char *argv[]) {
                 sprintf(hexHash, "%x", checkHash);
                 newUser->hashpwd = hexHash;
                 if (checkPassword(fp, newUser)) {
+                    boldGreen();
                     fprintf(stdout, "Access granted!\n");
+                    reset();
                     exit(0);
                 }
             }
             if (checkIfUserExists(fp, newUser->username)) {
+                boldYellow();
                 fprintf(stdout, "User already exists...\n");
+                reset();
                 exit(1);
             }
             char hexHash[16];
@@ -132,7 +146,6 @@ int main(int argc, char *argv[]) {
             if ((filho = fork()) == 0) {
                 int mySIZE = strlen(myPWD);
                 int hash = encryptPWD(myPWD, mySIZE);
-                printf("Hash = 0x%x\n", hash);
                 sprintf(hexHash, "%x", hash);
                 newUser->hashpwd = hexHash;
                 if (isTheFileEmpty(fp)) {

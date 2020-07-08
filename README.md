@@ -18,6 +18,5 @@ slimkaki@root $ ./hash -u `<USERNAME>` -p `<PASSWORD>`
 **TODO:**
 
     - Clean the code;
-    - Check if login;
-    
+
 
